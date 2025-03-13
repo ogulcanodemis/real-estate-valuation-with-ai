@@ -36,3 +36,64 @@
     transform: rotate(360deg);
   }
 }
+
+.app-container {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.main-content {
+  flex: 1;
+  padding: 2rem;
+  max-width: 1200px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.section {
+  margin-bottom: 2rem;
+}
+
+.card {
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+}
+
+.form-container {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.results-container {
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.property-card {
+  margin-bottom: 1.5rem;
+}
+
+.hero-section {
+  background-color: #e1f5fe;
+  padding: 3rem 0;
+  text-align: center;
+  border-radius: 8px;
+  margin-bottom: 2rem;
+}
+
+.feature-icon {
+  font-size: 3rem;
+  color: #1976d2;
+  margin-bottom: 1rem;
+}
+
+@media (max-width: 768px) {
+  .main-content {
+    padding: 1rem;
+  }
+}

@@ -1,0 +1,67 @@
+export interface FormData {
+  province: string;
+  district: string;
+  neighborhood: string;
+  property_type: string;
+  net_sqm: number;
+  gross_sqm: number;
+  room_count: string;
+  building_age: string;
+  floor_location: string;
+  total_floors: number;
+  heating_type: string;
+  bathroom_count: number;
+  balcony: boolean;
+  parking: boolean;
+  elevator: boolean;
+  furnished: boolean;
+  usage_status: string;
+  dues: number;
+  suitable_for_credit: boolean;
+  deed_status: string;
+  interior_features: string;
+  exterior_features: string;
+  view_features: string;
+  transportation: string;
+  neighborhood_features: string;
+  sea_view: boolean;
+  nature_view: boolean;
+  near_transportation: boolean;
+  near_market: boolean;
+  near_hospital: boolean;
+  near_school: boolean;
+}
+
+export const initialFormData: FormData = {
+  province: '',
+  district: '',
+  neighborhood: '',
+  property_type: '',
+  net_sqm: 0,
+  gross_sqm: 0,
+  room_count: '',
+  building_age: '',
+  floor_location: '',
+  total_floors: 0,
+  heating_type: '',
+  bathroom_count: 0,
+  balcony: false,
+  parking: false,
+  elevator: false,
+  furnished: false,
+  usage_status: '',
+  dues: 0,
+  suitable_for_credit: false,
+  deed_status: '',
+  interior_features: '',
+  exterior_features: '',
+  view_features: '',
+  transportation: '',
+  neighborhood_features: '',
+  sea_view: false,
+  nature_view: false,
+  near_transportation: false,
+  near_market: false,
+  near_hospital: false,
+  near_school: false
+}; 

@@ -1,46 +1,86 @@
-# Getting Started with Create React App
+# Emlak Değerleme Uygulaması
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+Bu uygulama, kullanıcıların mülklerinin tahmini değerini hesaplamalarına yardımcı olmak için geliştirilmiş bir araçtır. Uygulama, benzer özelliklere sahip mülklerin verilerini analiz ederek, kullanıcının girdiği özelliklere en yakın mülkleri bulur ve bu mülklerin fiyatlarına dayalı olarak bir değerleme tahmini sunar.
 
-## Available Scripts
+## Özellikler
 
-In the project directory, you can run:
+- Kullanıcı dostu arayüz ile mülk özelliklerini giriş yapma
+- Konum, alan, oda sayısı, bina yaşı ve diğer özelliklere göre değerleme
+- Benzer mülklerin karşılaştırmalı analizi
+- Görsel grafikler ile sonuçların sunumu
+- Mobil uyumlu tasarım
 
-### `npm start`
+## Teknolojiler
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
+### Frontend
+- React
+- TypeScript
+- Material UI
+- React Router
+- Chart.js
+- Axios
 
-The page will reload if you make edits.\
-You will also see any lint errors in the console.
+### Backend
+- Node.js
+- Express
+- PostgreSQL
+- CORS
+- Dotenv
 
-### `npm test`
+## Kurulum
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+### Gereksinimler
+- Node.js (v14 veya üzeri)
+- PostgreSQL (v12 veya üzeri)
 
-### `npm run build`
+### Veritabanı Kurulumu
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+1. PostgreSQL'i yükleyin ve çalıştırın
+2. `server/schema.sql` dosyasını PostgreSQL'de çalıştırarak veritabanını ve tabloları oluşturun:
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+```bash
+psql -U postgres -f server/schema.sql
+```
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+### Backend Kurulumu
 
-### `npm run eject`
+1. Server klasörüne gidin:
+```bash
+cd server
+```
 
-**Note: this is a one-way operation. Once you `eject`, you can’t go back!**
+2. Bağımlılıkları yükleyin:
+```bash
+npm install
+```
 
-If you aren’t satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+3. `.env` dosyasını düzenleyin ve veritabanı bağlantı bilgilerinizi girin.
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you’re on your own.
+4. Sunucuyu başlatın:
+```bash
+npm run dev
+```
 
-You don’t have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn’t feel obligated to use this feature. However we understand that this tool wouldn’t be useful if you couldn’t customize it when you are ready for it.
+### Frontend Kurulumu
 
-## Learn More
+1. Ana proje klasöründe bağımlılıkları yükleyin:
+```bash
+npm install
+```
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+2. Geliştirme sunucusunu başlatın:
+```bash
+npm start
+```
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+## Kullanım
+
+1. Tarayıcınızda `http://localhost:3000` adresine gidin
+2. "Değerleme" sayfasına gidin
+3. Değerlemek istediğiniz mülkün özelliklerini girin
+4. "Değerleme Yap" butonuna tıklayın
+5. Sonuçları inceleyin
+
+## Lisans
+
+Bu proje MIT lisansı altında lisanslanmıştır.
