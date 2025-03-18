@@ -1,7 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const db = require('./db');
-const { estimatePropertyPrice } = require('./ai-service');
+const { estimatePropertyPrice, determineBuyerProfile, suggestInvestments, analyzeMortgageAndInvestment } = require('./ai-service');
 require('dotenv').config();
 
 const app = express();
@@ -573,6 +573,241 @@ app.post('/api/estimate', async (req, res) => {
     res.status(500).json({ message: 'Sunucu hatası', error: error.message });
   }
 });
+
+// Değerleme sonuçları için gelişmiş AI analizlerini yapan endpoint
+app.post('/api/advanced-analysis', async (req, res) => {
+  try {
+    const { propertyDetails, estimatedPrice } = req.body;
+    
+    if (!propertyDetails || !estimatedPrice) {
+      return res.status(400).json({ 
+        message: 'Eksik parametre: propertyDetails ve estimatedPrice gereklidir' 
+      });
+    }
+    
+    console.log('Gelişmiş analiz için gelen istek:', { propertyDetails, estimatedPrice });
+    
+    try {
+      // Üç analizi paralel olarak çalıştır
+      const [buyerProfileData, investmentOptionsData, financialAnalysisData] = await Promise.all([
+        determineBuyerProfile(propertyDetails, estimatedPrice),
+        suggestInvestments(propertyDetails, estimatedPrice),
+        analyzeMortgageAndInvestment(propertyDetails, estimatedPrice)
+      ]);
+      
+      console.log('AI buyerProfile yanıtı:', buyerProfileData);
+      console.log('AI investmentOptions yanıtı:', investmentOptionsData);
+      
+      // Frontend'in beklediği format için dönüşüm yap
+      
+      // 1. Alıcı profili dönüşümü
+      const buyerProfile = {
+        potentialBuyers: (buyerProfileData?.buyerProfiles || []).map(profile => ({
+          profileType: typeof profile.profileType === 'string' ? profile.profileType : 
+                      (Array.isArray(profile.profileType) ? profile.profileType[0] : 'Yatırımcı'),
+          matchPercentage: profile.matchPercentage || 75,
+          description: profile.description || "Bu bölgede bu tip mülke ilgi gösterebilecek alıcı profili.",
+          ageRange: typeof profile.ageRange === 'string' ? profile.ageRange : 
+                   (Array.isArray(profile.ageRange) ? profile.ageRange[0] : '30-50'),
+          incomeLevel: typeof profile.incomeLevel === 'string' ? profile.incomeLevel : 
+                      (Array.isArray(profile.incomeLevel) ? profile.incomeLevel[0] : 'Yüksek'),
+          likelyMotivation: typeof profile.likelyMotivation === 'string' ? profile.likelyMotivation : 
+                           (Array.isArray(profile.likelyMotivation) ? profile.likelyMotivation[0] : 'Yatırım'),
+          keyFeatures: Array.isArray(profile.keyFeatures) ? profile.keyFeatures : 
+                      (profile.keyFeatures ? [profile.keyFeatures] : ["Merkezi konum", "Prestij", "Yatırım değeri"])
+        })) || createDefaultBuyerProfiles(propertyDetails, estimatedPrice),
+        marketingTips: buyerProfileData?.marketingTips || [
+          "Mülkün lokasyon avantajlarını ve prestijini vurgulayın.",
+          "Profesyonel fotoğraf ve videolarla mülkü tanıtın.",
+          "Yakındaki önemli noktaları (okullar, hastaneler, alışveriş merkezleri) belirtin."
+        ]
+      };
+      
+      // Eğer potentialBuyers boşsa varsayılan değerleri ekle
+      if (buyerProfile.potentialBuyers.length === 0) {
+        buyerProfile.potentialBuyers = createDefaultBuyerProfiles(propertyDetails, estimatedPrice);
+      }
+      
+      // 2. Yatırım önerileri dönüşümü
+      const investmentOptions = {
+        options: (investmentOptionsData?.investmentOptions || []).map(option => ({
+          title: typeof option.name === 'string' ? option.name : 
+                (Array.isArray(option.name) ? option.name[0] : 'Mutfak ve Banyo Yenilemesi'),
+          description: typeof option.description === 'string' ? option.description : 
+                      (Array.isArray(option.description) ? option.description[0] : 'Bu yenileme mülkün değerini artırabilir.'),
+          estimatedCost: typeof option.estimatedCost === 'number' ? option.estimatedCost : 
+                        (typeof option.estimatedCost === 'string' ? parseInt(option.estimatedCost.replace(/[^\d]/g, '')) || Math.round(estimatedPrice * 0.05) : 
+                        Math.round(estimatedPrice * 0.05)),
+          valueIncrease: typeof option.potentialValueIncrease === 'number' ? option.potentialValueIncrease : 
+                         (typeof option.potentialValueIncrease === 'string' ? parseInt(option.potentialValueIncrease.replace(/[^\d]/g, '')) || Math.round(estimatedPrice * 0.1) : 
+                         Math.round(estimatedPrice * 0.1)),
+          roi: typeof option.roi === 'number' ? option.roi : 
+               (typeof option.roi === 'string' ? parseInt(option.roi.replace(/[^\d]/g, '')) || 100 : 100),
+          implementationTime: typeof option.implementationTime === 'string' ? option.implementationTime : 
+                             (Array.isArray(option.implementationTime) ? option.implementationTime[0] : '4-8 hafta'),
+          difficulty: getDifficultyLevel(typeof option.difficulty === 'string' ? option.difficulty : 
+                                        (Array.isArray(option.difficulty) ? option.difficulty[0] : 'medium'))
+        })) || createDefaultInvestmentOptions(estimatedPrice),
+        generalAdvice: investmentOptionsData?.generalAdvice || "Yapılacak akıllıca yatırımlarla mülkün değeri önemli ölçüde artırılabilir."
+      };
+      
+      // Eğer options boşsa varsayılan değerleri ekle
+      if (investmentOptions.options.length === 0) {
+        investmentOptions.options = createDefaultInvestmentOptions(estimatedPrice);
+      }
+      
+      // Analiz sonuçlarını birleştir
+      const analysisResults = {
+        buyerProfile,
+        investmentOptions,
+        financialAnalysis: financialAnalysisData || createDefaultFinancialAnalysis(estimatedPrice)
+      };
+      
+      res.json(analysisResults);
+    } catch (aiError) {
+      console.error('Gelişmiş AI analiz hatası:', aiError);
+      
+      // Hata durumunda varsayılan değerler döndür
+      const fallbackResponse = createFallbackResponse(estimatedPrice, propertyDetails);
+      res.json(fallbackResponse);
+    }
+  } catch (error) {
+    console.error('Gelişmiş analiz hatası:', error);
+    res.status(500).json({ 
+      message: 'Gelişmiş analiz yapılırken bir hata oluştu', 
+      error: error.message 
+    });
+  }
+});
+
+// Zorluk seviyesini frontend formatına dönüştür
+function getDifficultyLevel(difficulty) {
+  if (!difficulty) return "medium";
+  
+  const lowerDifficulty = String(difficulty).toLowerCase();
+  
+  if (lowerDifficulty.includes("kolay") || lowerDifficulty.includes("düşük") || lowerDifficulty.includes("low")) return "low";
+  if (lowerDifficulty.includes("orta") || lowerDifficulty.includes("medium")) return "medium";
+  if (lowerDifficulty.includes("zor") || lowerDifficulty.includes("yüksek") || lowerDifficulty.includes("high")) return "high";
+  
+  return "medium";
+}
+
+// Varsayılan alıcı profilleri oluştur
+function createDefaultBuyerProfiles(propertyDetails, estimatedPrice) {
+  return [
+    {
+      profileType: "Yönetici / Genç Aile",
+      matchPercentage: 90,
+      description: `${propertyDetails.district || 'Bu bölge'}de bu tip bir mülke ilgi gösterebilecek alıcı profili.`,
+      ageRange: "35-50",
+      incomeLevel: "Yüksek",
+      likelyMotivation: "Lokasyon, Prestij, Aile Kurmak",
+      keyFeatures: ["Merkezi konum", "Prestij", "Yatırım değeri"]
+    },
+    {
+      profileType: "Yatırımcı",
+      matchPercentage: 70,
+      description: "Kira getirisi ve değer artışı için yatırım yapabilecek alıcı profili.",
+      ageRange: "40-60",
+      incomeLevel: "Yüksek",
+      likelyMotivation: "Yatırım, Kira Getirisi",
+      keyFeatures: ["Değer artışı", "Kira getirisi", "Merkezi konum"]
+    }
+  ];
+}
+
+// Varsayılan yatırım önerileri oluştur
+function createDefaultInvestmentOptions(estimatedPrice) {
+  return [
+    {
+      title: "Mutfak ve Banyo Yenilemesi",
+      description: "Modern ve şık bir mutfak ve banyo, dairenin değerini önemli ölçüde artırabilir.",
+      estimatedCost: Math.round(estimatedPrice * 0.05),
+      valueIncrease: Math.round(estimatedPrice * 0.1),
+      roi: 100,
+      implementationTime: "8 hafta",
+      difficulty: "medium"
+    },
+    {
+      title: "Zemin Kaplama Yenilemesi",
+      description: "Eski parke veya seramiklerin yerine modern ve dayanıklı laminant parke veya şık bir seramik döşenmesi.",
+      estimatedCost: Math.round(estimatedPrice * 0.02),
+      valueIncrease: Math.round(estimatedPrice * 0.04),
+      roi: 100,
+      implementationTime: "4 hafta",
+      difficulty: "low"
+    }
+  ];
+}
+
+// Varsayılan finansal analiz oluştur
+function createDefaultFinancialAnalysis(estimatedPrice) {
+  return {
+    mortgageAnalysis: {
+      loanScenarios: [
+        {
+          downPaymentPercentage: 20,
+          downPaymentAmount: Math.round(estimatedPrice * 0.2),
+          loanAmount: Math.round(estimatedPrice * 0.8),
+          term: 120,
+          monthlyPayment: Math.round((estimatedPrice * 0.8) / 100),
+          totalPayment: Math.round((estimatedPrice * 0.8) * 1.5),
+          totalInterest: Math.round((estimatedPrice * 0.8) * 0.5)
+        },
+        {
+          downPaymentPercentage: 40,
+          downPaymentAmount: Math.round(estimatedPrice * 0.4),
+          loanAmount: Math.round(estimatedPrice * 0.6),
+          term: 120,
+          monthlyPayment: Math.round((estimatedPrice * 0.6) / 100),
+          totalPayment: Math.round((estimatedPrice * 0.6) * 1.4),
+          totalInterest: Math.round((estimatedPrice * 0.6) * 0.4)
+        }
+      ]
+    },
+    investmentAnalysis: {
+      rentalEstimate: {
+        monthlyRental: Math.round(estimatedPrice * 0.0045),
+        annualRental: Math.round(estimatedPrice * 0.054),
+        rentalYield: 5.4
+      },
+      appreciationEstimate: {
+        annualAppreciationRate: 15,
+        valueAfter5Years: Math.round(estimatedPrice * Math.pow(1.15, 5)),
+        valueAfter10Years: Math.round(estimatedPrice * Math.pow(1.15, 10))
+      },
+      breakEvenAnalysis: {
+        breakEvenPoint: 18,
+        cashFlowPositiveAfter: 1
+      }
+    },
+    financialAdvice: [
+      "Bu mülk, yüksek kira getirisi potansiyeline sahiptir.",
+      "Kredi ödemelerinizi aylık kira gelirinizle karşılamak mümkün olabilir.",
+      "Bölgedeki emlak değer artışı ortalamanın üzerinde seyretmektedir."
+    ]
+  };
+}
+
+// Hata durumunda varsayılan yanıt oluştur
+function createFallbackResponse(estimatedPrice, propertyDetails) {
+  return {
+    buyerProfile: {
+      potentialBuyers: createDefaultBuyerProfiles(propertyDetails, estimatedPrice),
+      marketingTips: [
+        "Mülkün lokasyon avantajlarını ve prestijini vurgulayın.",
+        "Profesyonel fotoğraf ve videolarla dairenin iç mekanını ve ferah yapısını sergileyin.",
+        "Mülkün yakınındaki okullar, hastaneler, alışveriş merkezleri gibi önemli noktaları belirtin."
+      ]
+    },
+    investmentOptions: {
+      options: createDefaultInvestmentOptions(estimatedPrice),
+      generalAdvice: "Yapılacak akıllıca yatırımlarla mülkün değeri önemli ölçüde artırılabilir. Öncelikli olarak mutfak ve banyo yenilenmesi önerilir."
+    },
+    financialAnalysis: createDefaultFinancialAnalysis(estimatedPrice)
+  };
+}
 
 // Tüm ilçeleri getirme endpoint'i
 app.get('/api/districts', async (req, res) => {

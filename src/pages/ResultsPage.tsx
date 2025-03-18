@@ -5,7 +5,8 @@ import {
   Typography,
   Paper,
   Grid,
-  Button
+  Button,
+  Box
 } from '@mui/material';
 
 // Modüler bileşenler
@@ -13,6 +14,7 @@ import PropertyDetails from '../components/results/PropertyDetails';
 import PropertySlider from '../components/results/PropertySlider';
 import PriceChart from '../components/results/PriceChart';
 import EstimatedPrice from '../components/results/EstimatedPrice';
+import AdvancedAnalysisButton from '../components/results/AdvancedAnalysisButton';
 
 interface Property {
   id: number;
@@ -171,6 +173,14 @@ const ResultsPage: React.FC = () => {
                   aiEstimate={aiEstimate}
                 />
                 <PropertyDetails propertyDetails={propertyDetails} />
+                
+                <Box sx={{ mt: 3 }}>
+                  <AdvancedAnalysisButton 
+                    propertyDetails={propertyDetails} 
+                    estimatedPrice={estimatedPrice} 
+                    formatPrice={formatPrice}
+                  />
+                </Box>
                 
                 <Button 
                   variant="contained" 
